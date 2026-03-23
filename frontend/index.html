@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | SecureOps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        background: '#09090b',
+                        foreground: '#fafafa',
+                        card: '#0a0a0c',
+                        'card-foreground': '#fafafa',
+                        muted: '#18181b',
+                        'muted-foreground': '#71717a',
+                        border: '#27272a',
+                        input: '#27272a',
+                        primary: '#3b82f6',
+                        'primary-foreground': '#ffffff',
+                        destructive: '#ef4444',
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-foreground min-h-screen flex items-center justify-center">
+    <div class="w-full max-w-md px-6">
+        <!-- Logo and Header -->
+        <div class="text-center mb-8">
+            <div class="flex justify-center mb-6">
+                <div class="flex h-14 w-14 items-center justify-center rounded-xl bg-primary">
+                    <svg class="h-8 w-8 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                    </svg>
+                </div>
+            </div>
+            <h1 class="text-2xl font-bold tracking-tight text-foreground">SecureOps</h1>
+            <p class="mt-2 text-sm text-muted-foreground">AI-Driven Cloud Security Platform</p>
+        </div>
+
+        <!-- Login Card -->
+        <div class="rounded-lg border border-border bg-card p-8">
+            <!-- Error Message -->
+            <div id="loginError"
+                class="hidden mb-6 rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                Invalid username or password
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="space-y-5">
+                <div class="space-y-2">
+                    <label for="username" class="text-sm font-medium text-foreground">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required
+                        class="flex h-11 w-full rounded-md border border-input bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-colors">
+                </div>
+
+                <div class="space-y-2">
+                    <label for="password" class="text-sm font-medium text-foreground">Password</label>
+                    <input type="password" id="password" name="password" placeholder="Enter your password" required
+                        class="flex h-11 w-full rounded-md border border-input bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background transition-colors">
+                </div>
+
+                <button type="submit"
+                    class="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background disabled:pointer-events-none disabled:opacity-50">
+                    Sign In
+                </button>
+            </form>
+
+            <!-- Demo Credentials -->
+            <div class="mt-6 pt-6 border-t border-border">
+                <p class="text-xs text-center text-muted-foreground">
+                    Demo credentials: <span class="font-medium text-foreground">admin</span> / admin123 or <span
+                        class="font-medium text-foreground">demo</span> / demo123
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <p class="mt-6 text-center text-xs text-muted-foreground">
+            Secure authentication powered by JWT
+        </p>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

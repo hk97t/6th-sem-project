@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | SecureOps</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        background: '#09090b',
+                        foreground: '#fafafa',
+                        card: '#0a0a0c',
+                        'card-foreground': '#fafafa',
+                        muted: '#18181b',
+                        'muted-foreground': '#71717a',
+                        border: '#27272a',
+                        primary: '#3b82f6',
+                        'primary-foreground': '#ffffff',
+                        sidebar: '#0a0a0c',
+                        'sidebar-foreground': '#fafafa',
+                        'sidebar-border': '#27272a',
+                        'sidebar-accent': '#18181b',
+                        severity: {
+                            low: '#22c55e',
+                            medium: '#eab308',
+                            high: '#f97316',
+                            critical: '#ef4444',
+                        },
+                        status: {
+                            detected: '#3b82f6',
+                            investigating: '#eab308',
+                            mitigated: '#22c55e',
+                            resolved: '#6b7280',
+                        },
+                    },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', system-ui, sans-serif;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+    </style>
+</head>
+
+<body class="bg-background text-foreground">
+    <div class="flex h-screen">
+        <!-- Sidebar -->
+        <aside class="flex h-screen w-64 flex-col border-r border-sidebar-border bg-sidebar">
+            <!-- Logo -->
+            <div class="flex items-center gap-3 border-b border-sidebar-border px-6 py-5">
+                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
+                    <svg class="h-5 w-5 text-primary-foreground" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                        fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                    </svg>
+                </div>
+                <span class="text-lg font-semibold tracking-tight text-sidebar-foreground">
+                    SecureOps
+                </span>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="flex-1 space-y-1 px-3 py-4">
+                <a href="dashboard.html"
+                    class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors bg-sidebar-accent text-primary">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect width="7" height="9" x="3" y="3" rx="1" />
+                        <rect width="7" height="5" x="14" y="3" rx="1" />
+                        <rect width="7" height="9" x="14" y="12" rx="1" />
+                        <rect width="7" height="5" x="3" y="16" rx="1" />
+                    </svg>
+                    Dashboard
+                </a>
+                <a href="incidents.html"
+                    class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3" />
+                        <path d="M12 9v4" />
+                        <path d="M12 17h.01" />
+                    </svg>
+                    Incidents
+                </a>
+                <a href="#"
+                    class="flex items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium transition-colors text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground">
+                    <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path
+                            d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
+                        <circle cx="12" cy="12" r="3" />
+                    </svg>
+                    Settings
+                </a>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="border-t border-sidebar-border p-4">
+                <div class="flex items-center gap-3 rounded-md bg-sidebar-accent px-3 py-3">
+                    <div
+                        class="flex h-9 w-9 items-center justify-center rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                        <span id="userAvatar">AD</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-medium text-sidebar-foreground" id="userName">Admin User</span>
+                        <span class="text-xs text-muted-foreground" id="userRole">SOC Analyst</span>
+                    </div>
+                </div>
+                <button onclick="handleLogout()"
+                    class="mt-3 w-full rounded-md border border-border bg-transparent px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                    Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-auto">
+            <div class="px-8 py-8">
+                <header class="mb-8">
+                    <h1 class="text-2xl font-semibold tracking-tight text-foreground">
+                        Security Dashboard
+                    </h1>
+                    <p class="mt-1.5 text-sm text-muted-foreground">
+                        Real-time overview of your cloud security posture. Monitor threats and incident metrics.
+                    </p>
+                </header>
+
+                <!-- Stats Grid -->
+                <div class="grid gap-8 md:grid-cols-2 lg:grid-cols-4 mb-8">
+                    <!-- Total Logs Card -->
+                    <div
+                        class="rounded-lg border border-border bg-card p-6 group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                                <svg class="h-6 w-6 text-primary" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                                    <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-muted-foreground">Total Logs Ingested</p>
+                                <p class="text-2xl font-bold text-foreground" id="totalLogs">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Incidents Card -->
+                    <div
+                        class="rounded-lg border border-border bg-card p-6 group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div
+                                class="flex h-12 w-12 items-center justify-center rounded-lg bg-status-investigating/10">
+                                <svg class="h-6 w-6 text-status-investigating" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
+                                    <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-muted-foreground">Total Incidents</p>
+                                <p class="text-2xl font-bold text-foreground" id="totalIncidents">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Critical Incidents Card -->
+                    <div
+                        class="rounded-lg border border-border bg-card p-6 group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-severity-critical/10">
+                                <svg class="h-6 w-6 text-severity-critical" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <circle cx="12" cy="12" r="10" />
+                                    <line x1="12" x2="12" y1="8" y2="12" />
+                                    <line x1="12" x2="12.01" y1="16" y2="16" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-muted-foreground">Critical Incidents</p>
+                                <p class="text-2xl font-bold text-severity-critical" id="criticalCount">--</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- High Severity Card -->
+                    <div
+                        class="rounded-lg border border-border bg-card p-6 group hover:-translate-y-1 hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 transition-all duration-300">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-12 w-12 items-center justify-center rounded-lg bg-severity-high/10">
+                                <svg class="h-6 w-6 text-severity-high" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path
+                                        d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-sm font-medium text-muted-foreground">High Severity</p>
+                                <p class="text-2xl font-bold text-severity-high" id="highCount">--</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Incidents -->
+                <div
+                    class="rounded-lg border border-border bg-card group hover:border-border/80 transition-colors duration-300">
+                    <div class="flex items-center justify-between border-b border-border px-6 py-4">
+                        <h2 class="text-lg font-semibold text-foreground">Recent Incidents</h2>
+                        <a href="incidents.html"
+                            class="rounded-md border border-border bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                            View All
+                        </a>
+                    </div>
+                    <div class="p-6">
+                        <ul class="space-y-4" id="recentIncidentsList">
+                            <li class="text-muted-foreground text-center py-8">Loading incidents...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

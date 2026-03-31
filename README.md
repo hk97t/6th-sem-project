@@ -55,11 +55,21 @@ A full-stack cybersecurity dashboard that uses Machine Learning to detect anomal
 
 ## 📸 Screenshots
 
-### Dashboard Overview
-![Dashboard Overview](screenshots/dashboard_overview.png)
+### 1. Security Dashboard (Detect & Assess)
+*Top: High-level metrics and recent real-time alerts. Bottom: Deep dive into the Risk Backlog, severity distribution, and system logs.*
+![Dashboard Overview](screenshots/dashboard_top.png)
+![Dashboard Risk Backlog](screenshots/dashboard_bottom.png)
 
-### Risk Backlog & Visualization
-![Risk Backlog](screenshots/risk_backlog.png)
+### 2. Incident List
+*A filterable view of all anomalies promoted to security incidents.*
+![Security Incidents](screenshots/security_incidents.png)
+
+### 3. Incident Details & SOAR Playbooks (Respond)
+*In-depth telemetry, ML assessment details, and simulated response actions (SOAR).*
+![Incident Details View 1](screenshots/incident_details_1.png)
+![Incident Details View 2](screenshots/incident_details_2.png)
+![Incident Details View 3](screenshots/incident_details_3.png)
+![Incident Details View 4](screenshots/incident_details_4.png)
 
 ## 🚀 Quick Start
 

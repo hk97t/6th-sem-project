@@ -22,6 +22,9 @@ class IncidentListItem(BaseModel):
     severity: str
     status: str
     timestamp: str
+    confidence_score: float = 0.0
+    source_ip: str = ""
+    description: str = ""
 
 
 class IncidentDetail(BaseModel):

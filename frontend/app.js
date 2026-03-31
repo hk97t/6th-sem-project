@@ -372,7 +372,22 @@ async function initDashboardPage() {
     setActiveNavLink();
 
     await loadDashboardStats();
-    await loadRecentIncidents();
+    const incidents = await loadRecentIncidents();
+
+    // Initialize risk management features
+    if (incidents && incidents.length > 0) {
+        buildRiskBacklog(incidents);
+        renderRiskBacklog();
+        renderRiskChart();
+    }
+    addLogEntry('Dashboard initialized — security overview loaded', 'system');
+    renderActivityLog();
+
+    // Wire backlog filter handlers
+    const sevFilter = document.getElementById('backlogFilterSeverity');
+    const statusFilter = document.getElementById('backlogFilterStatus');
+    if (sevFilter) sevFilter.addEventListener('change', () => renderRiskBacklog());
+    if (statusFilter) statusFilter.addEventListener('change', () => renderRiskBacklog());
 }
 
 async function loadDashboardStats() {
@@ -396,27 +411,33 @@ async function loadDashboardStats() {
 
 async function loadRecentIncidents() {
     const listContainer = document.getElementById('recentIncidentsList');
-    if (!listContainer) return;
+    if (!listContainer) return null;
 
     try {
         const incidents = await apiGetIncidents();
         const recentIncidents = incidents.slice(0, 5);
 
-        listContainer.innerHTML = recentIncidents.map(incident => `
+        listContainer.innerHTML = recentIncidents.map(incident => {
+            const risk = computeRiskScore(incident);
+            return `
             <li class="flex items-center justify-between py-4 border-b border-border last:border-b-0">
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-3">
                     <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${getSeverityClass(incident.severity)}">${incident.severity}</span>
+                    <span class="inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-bold uppercase ${getRiskClass(risk.riskLevel)}">${risk.riskLevel}</span>
                     <div class="flex flex-col">
                         <span class="font-mono text-sm font-medium text-foreground">#${incident.incident_id}</span>
                         <span class="text-xs text-muted-foreground">${incident.timestamp}</span>
                     </div>
                 </div>
                 <a href="incident_details.html?id=${incident.incident_id}" class="rounded-md border border-border bg-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">View</a>
-            </li>
-        `).join('');
+            </li>`;
+        }).join('');
+
+        return incidents;
     } catch (error) {
         console.error('Error loading recent incidents:', error);
         listContainer.innerHTML = '<li class="text-muted-foreground text-center py-8">Failed to load incidents</li>';
+        return null;
     }
 }
 
@@ -440,7 +461,9 @@ async function loadIncidentsTable() {
     try {
         const incidents = await apiGetIncidents();
 
-        tableBody.innerHTML = incidents.map(incident => `
+        tableBody.innerHTML = incidents.map(incident => {
+            const risk = computeRiskScore(incident);
+            return `
             <tr class="border-b border-border hover:bg-muted/50 transition-colors">
                 <td class="px-6 py-4">
                     <div class="flex flex-col">
@@ -452,6 +475,9 @@ async function loadIncidentsTable() {
                     <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${getSeverityClass(incident.severity)}">${incident.severity}</span>
                 </td>
                 <td class="px-6 py-4">
+                    <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${getRiskClass(risk.riskLevel)}">${risk.riskLevel.toUpperCase()}</span>
+                </td>
+                <td class="px-6 py-4">
                     <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${getStatusClass(incident.status)}">${incident.status}</span>
                 </td>
                 <td class="px-6 py-4 font-mono text-sm text-muted-foreground">${incident.timestamp}</td>
@@ -460,17 +486,20 @@ async function loadIncidentsTable() {
                         View Details
                     </a>
                 </td>
-            </tr>
-        `).join('');
+            </tr>`;
+        }).join('');
     } catch (error) {
         console.error('Error loading incidents:', error);
-        tableBody.innerHTML = '<tr><td colspan="5" class="px-6 py-12 text-center text-muted-foreground">Failed to load incidents</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="px-6 py-12 text-center text-muted-foreground">Failed to load incidents</td></tr>';
     }
 }
 
 // ============================================
 // INCIDENT DETAILS PAGE FUNCTIONS
 // ============================================
+
+// Track current incident ID globally for playbook actions
+let currentIncidentId = null;
 
 async function initIncidentDetailsPage() {
     if (!requireAuth()) return;
@@ -487,6 +516,7 @@ async function initIncidentDetailsPage() {
         return;
     }
 
+    currentIncidentId = incidentId;
     await loadIncidentDetails(incidentId);
 }
 
@@ -512,6 +542,24 @@ async function loadIncidentDetails(incidentId) {
         document.getElementById('incidentConfidence').textContent = `${incident.confidence_score}%`;
         document.getElementById('incidentDescription').textContent = incident.description;
         document.getElementById('incidentRecommendation').textContent = incident.recommended_action;
+
+        // Render Risk Assessment
+        const risk = computeRiskScore(incident);
+        const likelihoodEl = document.getElementById('riskLikelihood');
+        const impactEl = document.getElementById('riskImpact');
+        const riskBadgeEl = document.getElementById('riskScoreBadge');
+        if (likelihoodEl) {
+            likelihoodEl.textContent = risk.likelihood.toUpperCase();
+            likelihoodEl.className = `inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${getRiskClass(risk.likelihood)}`;
+        }
+        if (impactEl) {
+            impactEl.textContent = risk.impact.toUpperCase();
+            impactEl.className = `inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${getRiskClass(risk.impact)}`;
+        }
+        if (riskBadgeEl) {
+            riskBadgeEl.textContent = risk.riskLevel.toUpperCase();
+            riskBadgeEl.className = `inline-flex items-center rounded-md border px-3 py-1 text-xs font-bold ${getRiskClass(risk.riskLevel)}`;
+        }
 
         const actionsList = document.getElementById('actionsTakenList');
         if (actionsList) {
@@ -587,6 +635,336 @@ async function handleTriggerResponse(incidentId) {
 function handleLogout() {
     clearUserSession();
     window.location.href = 'index.html';
+}
+
+// ============================================
+// RISK SCORING ENGINE
+// ============================================
+
+/**
+ * Compute risk score from incident severity and confidence
+ * @param {Object} incident - Incident object with severity and confidence_score
+ * @returns {Object} { likelihood, impact, riskLevel } — each 'low'|'medium'|'high'
+ */
+function computeRiskScore(incident) {
+    // Severity → Likelihood mapping
+    const severityMap = { 'critical': 'high', 'high': 'high', 'medium': 'medium', 'low': 'low' };
+    const likelihood = severityMap[(incident.severity || '').toLowerCase()] || 'low';
+
+    // Confidence score → Impact mapping
+    const conf = incident.confidence_score || 0;
+    let impact = 'low';
+    if (conf >= 80) impact = 'high';
+    else if (conf >= 50) impact = 'medium';
+
+    // Combined risk = max(likelihood, impact)
+    const levelOrder = { 'low': 0, 'medium': 1, 'high': 2 };
+    const levels = ['low', 'medium', 'high'];
+    const riskLevel = levels[Math.max(levelOrder[likelihood], levelOrder[impact])];
+
+    return { likelihood, impact, riskLevel };
+}
+
+/**
+ * Get Tailwind classes for risk level badges
+ * @param {string} level - 'low', 'medium', or 'high'
+ * @returns {string} Tailwind CSS class string
+ */
+function getRiskClass(level) {
+    const classMap = {
+        'high': 'bg-red-500/15 text-red-400 border-red-500/30',
+        'medium': 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+        'low': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+    };
+    return classMap[level] || classMap['low'];
+}
+
+// ============================================
+// RISK BACKLOG STATE & RENDERER
+// ============================================
+
+let riskBacklog = [];
+
+/**
+ * Build risk backlog from incidents array
+ * @param {Array} incidents - Incidents from API
+ */
+function buildRiskBacklog(incidents) {
+    riskBacklog = incidents.map(inc => {
+        const risk = computeRiskScore(inc);
+        // Map existing status to backlog status
+        let backlogStatus = 'Open';
+        const s = (inc.status || '').toLowerCase();
+        if (s === 'investigating' || s === 'response-initiated') backlogStatus = 'Investigating';
+        else if (s === 'resolved' || s === 'mitigated') backlogStatus = 'Resolved';
+        return {
+            incident_id: inc.incident_id,
+            severity: inc.severity,
+            risk,
+            status: backlogStatus,
+            timestamp: inc.timestamp,
+            source_ip: inc.source_ip || 'N/A',
+            actionsExecuted: []
+        };
+    });
+    addLogEntry(`Risk backlog populated with ${riskBacklog.length} items`, 'system');
+}
+
+/**
+ * Render risk backlog table with current filters applied
+ */
+function renderRiskBacklog() {
+    const tbody = document.getElementById('riskBacklogBody');
+    if (!tbody) return;
+
+    const sevFilter = document.getElementById('backlogFilterSeverity');
+    const statusFilter = document.getElementById('backlogFilterStatus');
+    const filterSev = sevFilter ? sevFilter.value : '';
+    const filterStatus = statusFilter ? statusFilter.value : '';
+
+    let filtered = riskBacklog;
+    if (filterSev) filtered = filtered.filter(i => i.severity === filterSev);
+    if (filterStatus) filtered = filtered.filter(i => i.status === filterStatus);
+
+    if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-8 text-center text-sm text-muted-foreground">No items match the selected filters.</td></tr>';
+        return;
+    }
+
+    tbody.innerHTML = filtered.map(item => {
+        const statusClasses = {
+            'Open': 'bg-blue-500/15 text-blue-400 border-blue-500/30',
+            'Investigating': 'bg-yellow-500/15 text-yellow-400 border-yellow-500/30',
+            'Resolved': 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
+        };
+        return `
+        <tr class="border-b border-border hover:bg-muted/50 transition-colors">
+            <td class="px-6 py-3 font-mono text-sm font-medium text-foreground">#${item.incident_id}</td>
+            <td class="px-6 py-3">
+                <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${getSeverityClass(item.severity)}">${item.severity}</span>
+            </td>
+            <td class="px-6 py-3">
+                <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-bold uppercase ${getRiskClass(item.risk.riskLevel)}">${item.risk.riskLevel}</span>
+            </td>
+            <td class="px-6 py-3">
+                <span class="inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-medium ${statusClasses[item.status] || statusClasses['Open']}">${item.status}</span>
+            </td>
+            <td class="px-6 py-3 font-mono text-xs text-muted-foreground">${item.timestamp}</td>
+            <td class="px-6 py-3 text-right">
+                <div class="flex items-center justify-end gap-2">
+                    <button onclick="executePlaybookAction(${item.incident_id}, 'block_ip')" title="Block IP"
+                        class="inline-flex items-center justify-center h-7 w-7 rounded border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-xs" ${item.status === 'Resolved' ? 'disabled' : ''}>
+                        ⊘
+                    </button>
+                    <button onclick="executePlaybookAction(${item.incident_id}, 'reset_password')" title="Reset Password"
+                        class="inline-flex items-center justify-center h-7 w-7 rounded border border-yellow-500/30 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 transition-colors text-xs" ${item.status === 'Resolved' ? 'disabled' : ''}>
+                        🔒
+                    </button>
+                    <button onclick="executePlaybookAction(${item.incident_id}, 'false_positive')" title="Mark False Positive"
+                        class="inline-flex items-center justify-center h-7 w-7 rounded border border-zinc-500/30 bg-zinc-500/10 text-zinc-400 hover:bg-zinc-500/20 transition-colors text-xs" ${item.status === 'Resolved' ? 'disabled' : ''}>
+                        ✕
+                    </button>
+                </div>
+            </td>
+        </tr>`;
+    }).join('');
+}
+
+// ============================================
+// PLAYBOOK ACTIONS (SIMULATED SOAR)
+// ============================================
+
+/**
+ * Execute a simulated playbook action on an incident
+ * @param {number} incidentId - Incident ID
+ * @param {string} actionType - 'block_ip' | 'reset_password' | 'false_positive'
+ */
+function executePlaybookAction(incidentId, actionType) {
+    const actionLabels = {
+        'block_ip': 'Block IP',
+        'reset_password': 'Reset Password',
+        'false_positive': 'Mark as False Positive'
+    };
+    const label = actionLabels[actionType] || actionType;
+
+    if (!confirm(`Execute "${label}" for incident #${incidentId}?`)) return;
+
+    // Update backlog item status
+    const item = riskBacklog.find(i => i.incident_id === incidentId);
+    if (item) {
+        if (actionType === 'false_positive') {
+            item.status = 'Resolved';
+        } else {
+            item.status = 'Investigating';
+        }
+        item.actionsExecuted.push(actionType);
+    }
+
+    // Log the action
+    addLogEntry(`Playbook: "${label}" executed on incident #${incidentId}`, 'action');
+
+    // Update UI
+    showAlert(`${label} executed for incident #${incidentId}`, 'success', 3000);
+    renderRiskBacklog();
+    renderActivityLog();
+    renderRiskChart();
+
+    // Update status message on details page if present
+    const statusEl = document.getElementById('playbookStatus');
+    if (statusEl) {
+        statusEl.textContent = `✓ "${label}" executed at ${new Date().toLocaleTimeString()}`;
+        statusEl.classList.remove('hidden');
+    }
+}
+
+// ============================================
+// SYSTEM ACTIVITY LOG
+// ============================================
+
+let systemLog = [];
+
+/**
+ * Add entry to the system activity log
+ * @param {string} message - Log message
+ * @param {string} type - 'system' | 'action' | 'risk'
+ */
+function addLogEntry(message, type = 'system') {
+    systemLog.unshift({
+        timestamp: new Date().toLocaleTimeString(),
+        date: new Date().toLocaleDateString(),
+        message,
+        type
+    });
+    // Cap at 50 entries
+    if (systemLog.length > 50) systemLog.pop();
+}
+
+/**
+ * Render system activity log in the UI
+ */
+function renderActivityLog() {
+    const list = document.getElementById('activityLogList');
+    if (!list) return;
+
+    if (systemLog.length === 0) {
+        list.innerHTML = '<li class="text-muted-foreground text-center py-6 text-sm">No activity yet.</li>';
+        return;
+    }
+
+    const typeIcons = {
+        'system': '⚙',
+        'action': '⚡',
+        'risk': '⚠'
+    };
+    const typeColors = {
+        'system': 'text-blue-400',
+        'action': 'text-emerald-400',
+        'risk': 'text-yellow-400'
+    };
+
+    list.innerHTML = systemLog.slice(0, 20).map(entry => `
+        <li class="flex items-start gap-3 rounded-md px-3 py-2 hover:bg-muted/50 transition-colors">
+            <span class="${typeColors[entry.type] || 'text-blue-400'} text-sm mt-0.5 flex-shrink-0">${typeIcons[entry.type] || '•'}</span>
+            <div class="flex-1 min-w-0">
+                <p class="text-xs text-foreground leading-relaxed">${entry.message}</p>
+                <p class="text-[10px] text-muted-foreground mt-0.5 font-mono">${entry.timestamp}</p>
+            </div>
+        </li>
+    `).join('');
+}
+
+// ============================================
+// RISK VISUALIZATION (CANVAS BAR CHART)
+// ============================================
+
+/**
+ * Render animated bar chart showing risk distribution
+ */
+function renderRiskChart() {
+    const canvas = document.getElementById('riskChart');
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+
+    // Set canvas size
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const w = rect.width;
+    const h = rect.height;
+
+    // Count risks
+    const counts = { high: 0, medium: 0, low: 0 };
+    riskBacklog.forEach(item => {
+        counts[item.risk.riskLevel]++;
+    });
+
+    const categories = [
+        { label: 'HIGH', count: counts.high, color: '#ef4444', glow: 'rgba(239,68,68,0.3)' },
+        { label: 'MEDIUM', count: counts.medium, color: '#eab308', glow: 'rgba(234,179,8,0.3)' },
+        { label: 'LOW', count: counts.low, color: '#22c55e', glow: 'rgba(34,197,94,0.3)' }
+    ];
+
+    const maxCount = Math.max(...categories.map(c => c.count), 1);
+    const barHeight = 36;
+    const barGap = 24;
+    const labelWidth = 80;
+    const countWidth = 50;
+    const chartLeft = labelWidth;
+    const chartRight = w - countWidth;
+    const chartWidth = chartRight - chartLeft;
+    const totalHeight = categories.length * (barHeight + barGap) - barGap;
+    const offsetY = (h - totalHeight) / 2;
+
+    // Animate
+    let progress = 0;
+    function draw() {
+        ctx.clearRect(0, 0, w, h);
+
+        categories.forEach((cat, i) => {
+            const y = offsetY + i * (barHeight + barGap);
+            const barW = (cat.count / maxCount) * chartWidth * Math.min(progress, 1);
+
+            // Label
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '600 11px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(cat.label, labelWidth - 16, y + barHeight / 2);
+
+            // Background track
+            ctx.fillStyle = 'rgba(255,255,255,0.04)';
+            ctx.beginPath();
+            ctx.roundRect(chartLeft, y, chartWidth, barHeight, 6);
+            ctx.fill();
+
+            // Bar
+            if (barW > 0) {
+                ctx.shadowColor = cat.glow;
+                ctx.shadowBlur = 12;
+                ctx.fillStyle = cat.color;
+                ctx.beginPath();
+                ctx.roundRect(chartLeft, y, Math.max(barW, 8), barHeight, 6);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+            }
+
+            // Count label
+            ctx.fillStyle = '#fafafa';
+            ctx.font = '700 14px Inter, system-ui, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(cat.count.toString(), chartRight + 12, y + barHeight / 2);
+        });
+
+        if (progress < 1) {
+            progress += 0.04;
+            requestAnimationFrame(draw);
+        }
+    }
+    draw();
 }
 
 // ============================================

@@ -14,6 +14,7 @@ I took charge of the frontend because I wanted to ensure the user experience was
 *   **Core**: I stuck to **Vanilla HTML5 and JavaScript (ES6+)**. Frameworks like React were considered, but for this specific dashboard performant DOM manipulation, we decided keep it lightweight and fast without the build overhead.
 *   **Styling**: I used **Tailwind CSS** (via CDN). It allowed me to rapidly prototype the UI with a dark-mode-first aesthetic (zinc/slate color palette) that feels professional and "cyber-security" native.
 *   **Visualization**: I implemented dynamic data rendering for the dashboard to show real-time incident stats.
+*   **Risk Management UI**: Later, I built the entire risk scoring visualization, risk backlog panel, playbook action buttons, and system activity log — all as modular vanilla JS modules with no external dependencies.
 
 ### **Backend & ML (K's Domain)**
 My partner, K, handled the heavy lifting on the server side.
@@ -41,9 +42,39 @@ While we had our separate domains, the real "magic" happened when we solved prob
 *   **Data Structure Mismatch**: I initially expected the API to return timestamps in a specific format, but the backend was sending raw ISO strings. We sat down, mapped out the exact JSON schema we needed, and I updated my frontend date parsers to handle the backend's format gracefully.
 *   **Real-time Feel**: We wanted the dashboard to feel "live". We brainstormed using WebSockets but decided that for our timeline, a smart polling mechanism (every 30s) was more robust. We implemented that logic jointly—K optimizing the database queries to be fast, and me implementing the non-intrusive UI updates.
 
-## 5. Conclusion
-SecureOps is the result of this tight collaboration. I delivered a responsive, modern interface that makes complex data accessible, while K built a robust, intelligent engine that powers it. The result is a seamless full-stack application that demonstrates real-time AI security 
-## 6. How to End the Demo (Shutdown)
+## 5. The Evolution: Risk Management & SOAR
+
+After the core platform was stable, we identified a gap: the system could *detect* threats but didn't provide a structured way to **assess**, **prioritize**, and **respond** to them. Drawing inspiration from enterprise SIEM/SOAR systems and Agile project management, I built a complete risk management layer on the frontend.
+
+### What I Added
+
+*   **Risk Scoring Engine**: I wrote a `computeRiskScore()` function that takes each incident's severity and ML confidence score and computes a risk level. Severity maps to *likelihood* (Critical/High → High likelihood), while confidence maps to *impact* (≥80% → High impact). The combined risk is the maximum of both — simple but effective for demo purposes.
+
+*   **Risk Backlog Panel**: Inspired by Agile sprint backlogs, this dashboard section presents all incidents in a filterable table. Each row shows the incident ID, severity badge, computed risk score, status (Open/Investigating/Resolved), and timestamp. Dropdown filters for severity and status make it easy to focus on what matters most.
+
+*   **Playbook Actions (Simulated SOAR)**: For each incident, I added three one-click response actions — *Block IP*, *Reset Password*, and *Mark as False Positive*. These are entirely client-side simulations: clicking a button updates the incident's status, appends to the system log, and re-renders all affected panels. This mirrors how real SOAR platforms work, just without the backend automation.
+
+*   **System Activity Log**: A scrollable, timestamped feed that tracks every significant event — dashboard initialization, backlog population, playbook executions. Each entry has an icon indicating its type (⚙ system, ⚡ action, ⚠ risk). This gives the SOC analyst a clear audit trail.
+
+*   **Risk Visualization Chart**: I built an animated horizontal bar chart using pure HTML5 Canvas API — no Chart.js, no D3. The chart shows the count of High, Medium, and Low risk incidents with colored bars and a subtle glow effect. It animates on load using `requestAnimationFrame` for a polished feel.
+
+### Why Frontend-Only?
+A key design decision was keeping all the new features **client-side only**. The risk scores are computed from data already returned by the API (severity + confidence_score), the backlog state lives in memory, and playbook actions update local state. This meant:
+- **Zero backend changes** — K's API and database remain untouched
+- **No deployment risk** — existing functionality is fully preserved
+- **Fast iteration** — I could build, test, and refine everything independently
+
+### The SE/PM Connection
+This phase directly maps to software engineering and project management concepts:
+- **Risk Assessment Matrix** → our severity × impact scoring model
+- **Agile Backlog** → our filterable risk backlog with status tracking
+- **SOAR Runbooks** → our playbook action buttons
+- **Change Management (SCM)** → our system activity log acting as an audit trail
+
+## 6. Conclusion
+SecureOps evolved from a security monitoring tool into a full **detect → assess → respond** platform. I delivered a responsive, modern interface with risk management features that makes complex security data actionable, while K built the robust AI-powered engine that feeds it. The result is a seamless full-stack application that demonstrates real-time AI security operations with enterprise-grade UX.
+
+## 7. How to End the Demo (Shutdown)
 
 To cleanly stop the application after the presentation:
 

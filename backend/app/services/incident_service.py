@@ -162,7 +162,10 @@ def get_incident_list(db: Session) -> List[dict]:
             "incident_id": inc.id,
             "severity": inc.severity,
             "status": inc.status,
-            "timestamp": inc.timestamp.strftime("%Y-%m-%d %H:%M")
+            "timestamp": inc.timestamp.strftime("%Y-%m-%d %H:%M"),
+            "confidence_score": inc.confidence_score or 0.0,
+            "source_ip": inc.source_ip or "",
+            "description": inc.description or ""
         }
         for inc in incidents
     ]

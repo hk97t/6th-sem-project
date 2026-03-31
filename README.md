@@ -53,6 +53,14 @@ A full-stack cybersecurity dashboard that uses Machine Learning to detect anomal
 └──────────────────────────────────────────────────────────────────────┘
 ```
 
+## 📸 Screenshots
+
+### Dashboard Overview
+![Dashboard Overview](screenshots/dashboard_overview.png)
+
+### Risk Backlog & Visualization
+![Risk Backlog](screenshots/risk_backlog.png)
+
 ## 🚀 Quick Start
 
 ### Prerequisites

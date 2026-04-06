@@ -252,20 +252,38 @@ The system comes pre-seeded with:
 
 This allows for immediate demonstration without real data.
 
-## 🎓 For Viva/Presentation
 
-Key points to explain:
+## 🚀 Key Features
 
-1. **Login Flow**: JWT authentication with token storage
-2. **Dashboard**: Real-time metrics from database + risk backlog + activity log
-3. **ML Pipeline**: Feature extraction → Anomaly detection → Severity classification
-4. **Risk Scoring**: How likelihood × impact is computed from severity and confidence
-5. **SOAR Playbooks**: Simulated incident response actions (Block IP, Reset Password, False Positive)
-6. **Incident Response**: Automated actions based on severity
-7. **Risk Visualization**: Canvas-based chart with animated bar rendering
-8. **Architecture**: Clean separation of concerns (API, Services, ML, DB)
-9. **Agile Concepts**: Risk backlog inspired by Agile sprint backlogs with status tracking
-10. **SIEM/SOAR Integration**: How the system mirrors enterprise security orchestration workflows
+- 🔐 **Secure Authentication**  
+  JWT-based login with token storage and protected routes  
+
+- 📊 **Real-Time Security Dashboard**  
+  Live metrics, risk backlog, and activity logs powered by backend APIs  
+
+- 🤖 **ML-Based Anomaly Detection**  
+  Feature extraction → Isolation Forest → severity classification  
+
+- ⚠️ **Dynamic Risk Scoring**  
+  Combines likelihood × impact using model confidence  
+
+- 🛠 **SOAR-Inspired Playbooks**  
+  Simulated response actions like IP blocking, password resets, and false-positive handling  
+
+- 🚨 **Automated Incident Response**  
+  Triggers actions based on severity levels  
+
+- 📈 **Interactive Risk Visualization**  
+  Canvas-based animated charts for threat insights  
+
+- 🧩 **Modular Architecture**  
+  Clean separation across API, services, ML pipeline, and database  
+
+- 📌 **Agile-Inspired Risk Backlog**  
+  Tracks and manages threats like sprint tasks with status updates  
+
+- 🔗 **SIEM/SOAR Workflow Simulation**  
+  Mimics enterprise-grade security orchestration systems  
 
 ## 📋 Version History
 

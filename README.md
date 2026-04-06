@@ -12,12 +12,17 @@ A full-stack cybersecurity dashboard that uses Machine Learning to detect anomal
 - **Real-time Dashboard** with security metrics
 - **Incident Management** with detailed views and response actions
 
-### Risk Management & Response (New)
+### Risk Management & Response
 - **Risk Scoring System** — each incident gets a computed risk level (High/Medium/Low) based on severity × confidence, displayed with color-coded badges (red/yellow/green)
 - **Risk Backlog Panel** — Agile-inspired backlog view with filterable table (by severity and status), showing incident ID, risk score, status, and timestamps
 - **Playbook Actions (Simulated SOAR)** — one-click incident response: Block IP, Reset Password, Mark as False Positive — updates UI state and logs actions
 - **System Activity Log** — timestamped feed tracking all dashboard events, playbook executions, and risk updates
 - **Risk Visualization** — animated canvas bar chart showing risk distribution (High/Medium/Low counts) with no external libraries
+
+### v1.1 — PDF Reports & Wireshark Integration (New)
+- **PDF Incident Reports** — download professional PDF reports for any incident (overview, risk assessment, ML confidence bar, actions, recommendations) powered by ReportLab
+- **Wireshark CSV Import** — upload Wireshark CSV packet captures directly from the dashboard; the platform parses packets, aggregates per-source-IP features, runs them through the ML pipeline, and auto-creates incidents for detected anomalies
+- **Drag-and-Drop Upload** — interactive drop zone with progress indicator and results summary (packets analyzed, sources found, incidents created with direct links)
 
 ## 🏗️ Architecture
 
@@ -27,12 +32,13 @@ A full-stack cybersecurity dashboard that uses Machine Learning to detect anomal
 │                 HTML / Tailwind CSS / Vanilla JS                      │
 │  ┌────────────────────────────────────────────────────────────────┐   │
 │  │  Dashboard  │  Risk Backlog  │  Risk Chart  │  Activity Log   │   │
-│  │  Incidents  │  Incident Details + Risk Assessment              │   │
+│  │  Wireshark CSV Import (Drag & Drop)                            │   │
+│  │  Incidents  │  Incident Details + Risk Assessment + PDF Export │   │
 │  │  Playbook Actions (SOAR Simulation)                            │   │
 │  └────────────────────────────────────────────────────────────────┘   │
 │  ┌────────────────────────────────────────────────────────────────┐   │
-│  │  Client-Side Modules: Risk Scoring Engine, Backlog State,     │   │
-│  │  System Log, Canvas Chart Renderer                            │   │
+│  │  Client-Side Modules: Risk Scoring, Backlog State, System Log │   │
+│  │  Canvas Chart, PDF Download, CSV Upload Handler               │   │
 │  └────────────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────────┘
                                 │
@@ -40,13 +46,15 @@ A full-stack cybersecurity dashboard that uses Machine Learning to detect anomal
 ┌──────────────────────────────────────────────────────────────────────┐
 │                        FastAPI Backend                                │
 │    ┌──────────────────────────────────────────────────────────┐       │
-│    │  API Layer: Auth, Logs, Incidents, Dashboard             │       │
+│    │  API: Auth, Logs, Incidents, Dashboard, CSV Upload       │       │
 │    └──────────────────────────────────────────────────────────┘       │
 │    ┌─────────────────────┐    ┌───────────────────────────────┐      │
 │    │   ML Pipeline       │    │    Service Layer              │      │
 │    │  - Isolation Forest │    │  - Incident Creation          │      │
 │    │  - Random Forest    │    │  - Response Execution         │      │
-│    └─────────────────────┘    └───────────────────────────────┘      │
+│    └─────────────────────┘    │  - PDF Report Generation      │      │
+│                               │  - CSV Parsing & Aggregation  │      │
+│                               └───────────────────────────────┘      │
 │    ┌──────────────────────────────────────────────────────────┐       │
 │    │          SQLite Database (SQLAlchemy)                    │       │
 │    └──────────────────────────────────────────────────────────┘       │
@@ -121,8 +129,9 @@ Use demo credentials:
 │   │   ├── api/              # API endpoints
 │   │   │   ├── auth.py       # Login & JWT
 │   │   │   ├── logs.py       # Log ingestion
-│   │   │   ├── incidents.py  # Incident CRUD
-│   │   │   └── dashboard.py  # Dashboard stats
+│   │   │   ├── incidents.py  # Incident CRUD + PDF report download
+│   │   │   ├── dashboard.py  # Dashboard stats
+│   │   │   └── csv_upload.py # Wireshark CSV upload endpoint (v1.1)
 │   │   ├── core/             # Core utilities
 │   │   │   ├── config.py     # Configuration
 │   │   │   └── security.py   # JWT & auth
@@ -135,7 +144,9 @@ Use demo credentials:
 │   │   │   └── models/       # Saved models
 │   │   ├── services/         # Business logic
 │   │   │   ├── incident_service.py
-│   │   │   └── response_service.py
+│   │   │   ├── response_service.py
+│   │   │   ├── pdf_service.py  # PDF report generation (v1.1)
+│   │   │   └── csv_service.py  # Wireshark CSV parser (v1.1)
 │   │   ├── utils/
 │   │   │   └── logger.py
 │   │   └── main.py           # FastAPI app
@@ -143,11 +154,11 @@ Use demo credentials:
 │
 ├── frontend/
 │   ├── index.html            # Login page
-│   ├── dashboard.html        # Dashboard + Risk Backlog + Chart + Activity Log
+│   ├── dashboard.html        # Dashboard + Risk Backlog + Chart + CSV Import
 │   ├── incidents.html        # Incident list + Risk Score column
-│   ├── incident_details.html # Incident details + Risk Assessment + Playbook
+│   ├── incident_details.html # Incident details + Risk + Playbook + PDF download
 │   ├── style.css             # Styling
-│   └── app.js                # Frontend logic + Risk/SOAR modules
+│   └── app.js                # Frontend logic + Risk/SOAR/PDF/CSV modules
 │
 ├── project_storyline.md
 ├── PROJECT_MANAGEMENT_README.md
@@ -162,8 +173,10 @@ Use demo credentials:
 | GET | `/api/dashboard/stats` | Dashboard metrics |
 | GET | `/api/incidents` | List all incidents |
 | GET | `/api/incidents/{id}` | Incident details |
+| GET | `/api/incidents/{id}/report` | Download PDF report *(v1.1)* |
 | POST | `/api/incidents/{id}/respond` | Trigger response |
 | POST | `/api/logs` | Ingest security log |
+| POST | `/api/csv/upload` | Upload Wireshark CSV *(v1.1)* |
 
 ## 🤖 ML Pipeline
 
@@ -253,6 +266,26 @@ Key points to explain:
 8. **Architecture**: Clean separation of concerns (API, Services, ML, DB)
 9. **Agile Concepts**: Risk backlog inspired by Agile sprint backlogs with status tracking
 10. **SIEM/SOAR Integration**: How the system mirrors enterprise security orchestration workflows
+
+## 📋 Version History
+
+### v1.1.0 — PDF Reports + Wireshark Integration (April 2026)
+- **PDF Incident Report Download** — generate and download professional PDF reports for any incident, with risk assessment, ML confidence visualization, and recommended actions
+- **Wireshark CSV Import** — upload Wireshark-exported CSV packet captures; auto-parses, aggregates per-source-IP, runs ML anomaly detection, and creates incidents
+- **New API Endpoints** — `GET /api/incidents/{id}/report` (PDF) and `POST /api/csv/upload` (CSV)
+- **New Backend Services** — `pdf_service.py` (ReportLab), `csv_service.py` (parser + aggregator)
+- **Dashboard Enhancement** — drag-and-drop CSV upload zone with progress indicator and results summary
+- **Incident Details Enhancement** — "Download PDF Report" button with loading states
+- **Dependency Added** — `reportlab==4.1.0`
+
+### v1.0.0 — Initial Release (February 2026)
+- Core security dashboard with ML-powered anomaly detection
+- JWT authentication with role-based access (Admin / Analyst)
+- Isolation Forest (anomaly detection) + Random Forest (severity classification)
+- Risk management system: scoring, backlog, playbook actions, activity log
+- Animated Canvas risk distribution chart (zero dependencies)
+- Automated incident response simulation
+- 10 pre-seeded demo incidents + 1000+ log entries
 
 ## 📝 License
 

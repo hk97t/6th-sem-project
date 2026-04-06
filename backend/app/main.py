@@ -14,7 +14,7 @@ from app.core.config import CORS_ORIGINS, API_PREFIX
 from app.core.security import get_password_hash
 from app.db.database import init_db, SessionLocal
 from app.db.models import User, Log, Incident, IncidentAction
-from app.api import auth, logs, incidents, dashboard
+from app.api import auth, logs, incidents, dashboard, csv_upload
 from app.utils.logger import api_logger
 
 
@@ -278,7 +278,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Cloud Security Platform API",
     description="AI-Driven Cloud Security Incident Detection & Response Platform",
-    version="1.0.0",
+    version="1.1.0",
     lifespan=lifespan
 )
 
@@ -296,6 +296,7 @@ app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(logs.router, prefix=API_PREFIX)
 app.include_router(incidents.router, prefix=API_PREFIX)
 app.include_router(dashboard.router, prefix=API_PREFIX)
+app.include_router(csv_upload.router, prefix=API_PREFIX)
 
 
 @app.get("/")
@@ -304,7 +305,7 @@ async def root():
     return {
         "name": "Cloud Security Platform API",
         "status": "running",
-        "version": "1.0.0"
+        "version": "1.1.0"
     }
 
 

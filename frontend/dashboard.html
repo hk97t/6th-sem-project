@@ -290,6 +290,101 @@
                     </div>
                 </div>
 
+                <!-- Wireshark CSV Import -->
+                <div id="csvImportSection"
+                    class="rounded-lg border border-border bg-card mt-8 group hover:border-border/80 transition-colors duration-300">
+                    <div class="flex items-center gap-3 border-b border-border px-6 py-4">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10">
+                            <svg class="h-4 w-4 text-emerald-500" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" x2="12" y1="3" y2="15" />
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-semibold text-foreground">Import Wireshark Capture</h2>
+                            <p class="text-xs text-muted-foreground">Upload a CSV export from Wireshark for ML-powered analysis</p>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <!-- Drop Zone -->
+                        <div id="csvDropZone"
+                            class="relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed border-border bg-muted/30 px-6 py-10 text-center transition-all duration-300 hover:border-primary/50 hover:bg-primary/5 cursor-pointer">
+                            <svg class="h-10 w-10 text-muted-foreground mb-3" xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
+                                <path d="M14 2v4a2 2 0 0 0 2 2h4" />
+                                <path d="M10 12h4" />
+                                <path d="M10 16h4" />
+                                <path d="M10 8h1" />
+                            </svg>
+                            <p class="text-sm font-medium text-foreground mb-1">
+                                Drop your Wireshark CSV here
+                            </p>
+                            <p class="text-xs text-muted-foreground mb-3">
+                                or click to browse — accepts .csv files up to 10 MB
+                            </p>
+                            <button id="csvBrowseBtn"
+                                class="inline-flex items-center gap-2 rounded-md border border-border bg-transparent px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground transition-colors">
+                                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"
+                                    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round">
+                                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                    <polyline points="17 8 12 3 7 8" />
+                                    <line x1="12" x2="12" y1="3" y2="15" />
+                                </svg>
+                                Browse Files
+                            </button>
+                            <input type="file" id="csvFileInput" accept=".csv" class="hidden" />
+                        </div>
+
+                        <!-- Progress (hidden by default) -->
+                        <div id="csvProgress" class="hidden mt-4">
+                            <div class="flex items-center gap-3 mb-2">
+                                <div class="animate-spin h-4 w-4 border-2 border-primary border-t-transparent rounded-full"></div>
+                                <span class="text-sm text-foreground" id="csvProgressText">Processing CSV...</span>
+                            </div>
+                            <div class="w-full bg-muted/50 rounded-full h-1.5 overflow-hidden">
+                                <div class="bg-gradient-to-r from-primary/60 to-primary h-full rounded-full animate-pulse" style="width: 100%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Results (hidden by default) -->
+                        <div id="csvResults" class="hidden mt-4 rounded-lg border border-border bg-muted/30 p-5">
+                            <div class="flex items-center gap-2 mb-4">
+                                <svg class="h-5 w-5 text-emerald-400" xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                    <polyline points="22 4 12 14.01 9 11.01" />
+                                </svg>
+                                <h3 class="text-sm font-semibold text-foreground">Analysis Complete</h3>
+                            </div>
+                            <div class="grid grid-cols-3 gap-4 mb-4">
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-foreground font-mono" id="csvResTotalPackets">0</p>
+                                    <p class="text-xs text-muted-foreground">Packets Analyzed</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-foreground font-mono" id="csvResSources">0</p>
+                                    <p class="text-xs text-muted-foreground">Unique Sources</p>
+                                </div>
+                                <div class="text-center">
+                                    <p class="text-2xl font-bold text-primary font-mono" id="csvResIncidents">0</p>
+                                    <p class="text-xs text-muted-foreground">Incidents Created</p>
+                                </div>
+                            </div>
+                            <div id="csvResIncidentLinks" class="hidden">
+                                <p class="text-xs text-muted-foreground mb-2">New Incidents:</p>
+                                <div class="flex flex-wrap gap-2" id="csvResLinks"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Two-Column: Risk Chart + Activity Log -->
                 <div class="grid gap-8 md:grid-cols-2 mt-8">
                     <!-- Risk Distribution Chart -->

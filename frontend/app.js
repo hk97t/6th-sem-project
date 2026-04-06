@@ -968,6 +968,223 @@ function renderRiskChart() {
 }
 
 // ============================================
+// PDF REPORT DOWNLOAD
+// ============================================
+
+/**
+ * Download a PDF report for an incident
+ * @param {number} incidentId - Incident ID
+ */
+async function downloadIncidentPdf(incidentId) {
+    if (!incidentId) {
+        showAlert('No incident selected', 'danger');
+        return;
+    }
+
+    const btn = document.getElementById('downloadPdfBtn');
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `
+            <div class="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+            Generating PDF...
+        `;
+    }
+
+    try {
+        const token = getAuthToken();
+        const response = await fetch(`${API_BASE_URL}/incidents/${incidentId}/report`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to generate PDF');
+        }
+
+        // Download blob
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `SecureOps_Incident_${incidentId}_Report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        showAlert(`PDF report downloaded for incident #${incidentId}`, 'success');
+    } catch (error) {
+        console.error('PDF download error:', error);
+        showAlert('Failed to download PDF report', 'danger');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = `
+                <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
+                    stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" x2="12" y1="15" y2="3" />
+                </svg>
+                Download PDF Report
+            `;
+        }
+    }
+}
+
+// ============================================
+// WIRESHARK CSV IMPORT
+// ============================================
+
+/**
+ * Upload and process a Wireshark CSV file
+ * @param {File} file - CSV file to upload
+ */
+async function handleCsvUpload(file) {
+    if (!file) return;
+
+    // Validate file type
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+        showAlert('Please upload a CSV file', 'danger');
+        return;
+    }
+
+    // Validate file size (10 MB)
+    if (file.size > 10 * 1024 * 1024) {
+        showAlert('File too large. Maximum size is 10 MB.', 'danger');
+        return;
+    }
+
+    const dropZone = document.getElementById('csvDropZone');
+    const progress = document.getElementById('csvProgress');
+    const results = document.getElementById('csvResults');
+    const progressText = document.getElementById('csvProgressText');
+
+    // Show progress, hide drop zone
+    if (dropZone) dropZone.classList.add('hidden');
+    if (progress) progress.classList.remove('hidden');
+    if (results) results.classList.add('hidden');
+    if (progressText) progressText.textContent = `Processing ${file.name}...`;
+
+    try {
+        const token = getAuthToken();
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch(`${API_BASE_URL}/csv/upload`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errData = await response.json().catch(() => ({}));
+            throw new Error(errData.detail || 'Upload failed');
+        }
+
+        const data = await response.json();
+
+        // Show results
+        if (progress) progress.classList.add('hidden');
+        if (results) results.classList.remove('hidden');
+
+        document.getElementById('csvResTotalPackets').textContent = formatNumber(data.total_packets);
+        document.getElementById('csvResSources').textContent = formatNumber(data.sources_analyzed);
+        document.getElementById('csvResIncidents').textContent = formatNumber(data.incidents_created);
+
+        // Show incident links
+        const linksContainer = document.getElementById('csvResLinks');
+        const linksSection = document.getElementById('csvResIncidentLinks');
+        if (data.incident_ids && data.incident_ids.length > 0 && linksContainer && linksSection) {
+            linksSection.classList.remove('hidden');
+            linksContainer.innerHTML = data.incident_ids.map(id =>
+                `<a href="incident_details.html?id=${id}"
+                    class="inline-flex items-center rounded-md border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors">
+                    Incident #${id}
+                </a>`
+            ).join('');
+        }
+
+        showAlert(data.message, 'success', 5000);
+        addLogEntry(`Wireshark CSV imported: ${data.total_packets} packets, ${data.incidents_created} incidents`, 'action');
+        renderActivityLog();
+
+        // Reload dashboard data to show new incidents
+        await loadDashboardStats();
+        const incidents = await loadRecentIncidents();
+        if (incidents && incidents.length > 0) {
+            buildRiskBacklog(incidents);
+            renderRiskBacklog();
+            renderRiskChart();
+        }
+
+    } catch (error) {
+        console.error('CSV upload error:', error);
+        showAlert(`CSV upload failed: ${error.message}`, 'danger');
+        if (progress) progress.classList.add('hidden');
+        if (dropZone) dropZone.classList.remove('hidden');
+    }
+}
+
+/**
+ * Initialize the CSV drag-and-drop upload zone
+ */
+function initCsvUploadZone() {
+    const dropZone = document.getElementById('csvDropZone');
+    const fileInput = document.getElementById('csvFileInput');
+    const browseBtn = document.getElementById('csvBrowseBtn');
+
+    if (!dropZone || !fileInput) return;
+
+    // Click to open file dialog
+    dropZone.addEventListener('click', (e) => {
+        if (e.target !== browseBtn && !browseBtn?.contains(e.target)) {
+            fileInput.click();
+        }
+    });
+
+    if (browseBtn) {
+        browseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+    }
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+            handleCsvUpload(e.target.files[0]);
+        }
+    });
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.add('border-primary', 'bg-primary/10');
+    });
+
+    dropZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('border-primary', 'bg-primary/10');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        dropZone.classList.remove('border-primary', 'bg-primary/10');
+
+        if (e.dataTransfer.files.length > 0) {
+            handleCsvUpload(e.dataTransfer.files[0]);
+        }
+    });
+}
+
+// ============================================
 // PAGE INITIALIZATION
 // ============================================
 
@@ -989,6 +1206,7 @@ document.addEventListener('DOMContentLoaded', () => {
             break;
         case 'dashboard.html':
             initDashboardPage();
+            initCsvUploadZone();
             break;
         case 'incidents.html':
             initIncidentsPage();

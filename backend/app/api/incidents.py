@@ -1,8 +1,10 @@
 """
 Incidents API endpoints.
 """
+import io
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -11,6 +13,7 @@ from app.db.models import Incident
 from app.core.security import get_current_user
 from app.services.incident_service import get_incident_list, get_incident_details, update_incident_status
 from app.services.response_service import execute_response
+from app.services.pdf_service import generate_incident_pdf
 from app.utils.logger import api_logger
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
@@ -97,6 +100,50 @@ async def get_incident(
         )
     
     return details
+
+
+@router.get("/{incident_id}/report")
+async def download_incident_report(
+    incident_id: int,
+    db: Session = Depends(get_db),
+    current_user: dict = Depends(get_current_user),
+):
+    """
+    Generate and download a PDF report for an incident.
+
+    Frontend integration point: GET /api/incidents/{id}/report
+
+    Returns a downloadable PDF file.
+    """
+    api_logger.info(f"Generating PDF report for incident #{incident_id} by user: {current_user['username']}")
+
+    details = get_incident_details(db, incident_id)
+
+    if not details:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Incident #{incident_id} not found",
+        )
+
+    try:
+        pdf_bytes = generate_incident_pdf(details)
+    except Exception as e:
+        api_logger.error(f"PDF generation failed for incident #{incident_id}: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate PDF report.",
+        )
+
+    filename = f"SecureOps_Incident_{incident_id}_Report.pdf"
+
+    return StreamingResponse(
+        io.BytesIO(pdf_bytes),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Content-Length": str(len(pdf_bytes)),
+        },
+    )
 
 
 @router.post("/{incident_id}/respond", response_model=ResponseTriggerResponse)
